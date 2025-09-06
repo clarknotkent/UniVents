@@ -1,0 +1,67 @@
+    # Miscellaneous
+    *.class
+    *.log
+    *.pyc
+    *.swp
+    .DS_Store
+    .atom/
+    .buildlog/
+    .history
+    .svn/
+
+    # IntelliJ related
+    *.iml
+    *.ipr
+    *.iws
+    .idea/
+
+    # Flutter/Dart related
+    **/build/
+    .dart_tool/
+    .flutter-plugins
+    .flutter-plugins-dependencies
+    .packages
+    .pub-cache/
+    .pub/
+    /ios/.symlinks/
+    /linux/flutter/ephemeral/
+    /macos/Flutter/ephemeral/
+    /windows/flutter/ephemeral/
+
+    # Android related
+    **/android/**/gradle-wrapper.jar
+    **/android/.gradle
+    **/android/captures/
+    **/android/gradlew
+    **/android/gradlew.bat
+    **/android/local.properties
+    **/android/key.properties
+    **/android/app/src/main/assets/flutter_assets/kernel_blob.bin # Re-generated on build
+
+    # iOS related
+    **/ios/Pods/
+    **/ios/Runner/GeneratedPluginRegistrant.*
+    **/ios/Flutter/App.framework
+    **/ios/Flutter/Flutter.podspec
+    **/ios/Flutter/Generated.xcconfig
+    **/ios/Flutter/flutter_export_environment.sh
+    **/ios/Flutter/GeneratedPluginRegistrant.h
+    **/ios/Flutter/GeneratedPluginRegistrant.m
+    **/ios/Runner.xcworkspace/xcuserdata/
+    **/ios/Runner.xcodeproj/project.xcworkspace/
+    **/ios/Runner.xcodeproj/xcuserdata/
+
+    # VS Code related
+    .vscode/
+
+    # Firebase related (IMPORTANT - Do not commit sensitive keys)
+    /android/app/google-services.json
+    /ios/Runner/GoogleService-Info.plist
+    # If you generated web config differently, ignore that file too
+    # /web/firebase-config.js
+    # Ignore generated firebase_options.dart (team members should run flutterfire configure)
+    lib/firebase_options.dart
+
+    # Sensitive environment variables (if you use .env files)
+    .env*
+    

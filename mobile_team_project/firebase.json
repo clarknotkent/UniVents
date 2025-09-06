@@ -1,0 +1,20 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"it5-teamj1","appId":"1:1097036028807:android:f1dffcaf3769f2edd11122","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"it5-teamj1","configurations":{"android":"1:1097036028807:android:f1dffcaf3769f2edd11122"}}}}}}
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rule for the 'users' collection
+    match /users/{userId} {
+      // Allow reads and writes ONLY if the user is logged in
+      // AND their UID matches the document ID they are accessing.
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Add rules for other collections here if needed
+  }
+}
+
+// Add this inside match /databases/{database}/documents { ... }
+match /organizations/{orgId} {
+  allow read: if request.auth != null; // Allow any logged-in user to read organization data
+  // Add write rules if needed later (e.g., only admins can write)
+}
