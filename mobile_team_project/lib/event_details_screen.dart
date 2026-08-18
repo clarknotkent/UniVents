@@ -53,11 +53,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   // Fetches the organization name (No changes needed)
   Future<void> _fetchOrganizerName() async {
     if (widget.event.organizationId.isEmpty) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _organizerName = "N/A";
           _isLoadingOrganizer = false;
         });
+      }
       return;
     }
     try {
@@ -79,12 +80,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         });
       }
     } catch (e) {
-      print("Error fetching organizer name: $e");
-      if (mounted)
+      debugPrint("Error fetching organizer name: $e");
+      if (mounted) {
         setState(() {
           _organizerName = "Error";
           _isLoadingOrganizer = false;
         });
+      }
     }
   }
 
@@ -100,7 +102,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               .collection('events')
               .doc(widget.event.id)
               .collection('attendees')
-              .doc(_currentUser!.uid)
+              .doc(_currentUser.uid)
               .get();
 
       if (mounted) {
@@ -110,7 +112,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         });
       }
     } catch (e) {
-      print("Error checking joined status: $e");
+      debugPrint("Error checking joined status: $e");
       if (mounted) setState(() => _isLoadingJoinedStatus = false);
       // Optionally show an error message
     }
@@ -133,8 +135,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       return;
     }
 
-    if (mounted)
+    if (mounted) {
       setState(() => _isJoining = true); // Show loading state on button
+    }
 
     try {
       // Create a document in the 'attendees' subcollection
@@ -142,11 +145,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           .collection('events')
           .doc(widget.event.id)
           .collection('attendees')
-          .doc(_currentUser!.uid)
+          .doc(_currentUser.uid)
           .set({
-            'userId': _currentUser!.uid, // Store user ID
-            'userName': _currentUser!.displayName, // Store user name (optional)
-            'userEmail': _currentUser!.email, // Store user email (optional)
+            'userId': _currentUser.uid, // Store user ID
+            'userName': _currentUser.displayName, // Store user name (optional)
+            'userEmail': _currentUser.email, // Store user email (optional)
             'joinedAt': FieldValue.serverTimestamp(), // Record the timestamp
           });
 
@@ -163,7 +166,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         );
       }
     } catch (e) {
-      print("Error joining event: $e");
+      debugPrint("Error joining event: $e");
       if (mounted) {
         setState(() => _isJoining = false); // Hide loading indicator
         ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +231,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           .collection('events')
           .doc(widget.event.id)
           .collection('attendees')
-          .doc(_currentUser!.uid)
+          .doc(_currentUser.uid)
           .delete();
 
       if (mounted) {
@@ -243,7 +246,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         );
       }
     } catch (e) {
-      print("Error unjoining event: $e");
+      debugPrint("Error unjoining event: $e");
       if (mounted) {
         setState(() => _isUnjoining = false); // Hide loading indicator
         ScaffoldMessenger.of(context).showSnackBar(
@@ -273,7 +276,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ' - ${DateFormat('h:mm a').format(widget.event.endDateTime!)}';
         }
       } catch (e) {
-        print("Error formatting detail date/time: $e");
+        debugPrint("Error formatting detail date/time: $e");
       }
     }
     // --- End Date and Time Formatting ---
@@ -417,7 +420,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     borderRadius: BorderRadius.circular(15.0),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: Offset(0, 4),
                       ),
@@ -507,7 +510,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             top: topPadding + 5,
             left: 8,
             child: Material(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               shape: CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(
@@ -522,7 +525,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             top: topPadding + 5,
             right: 8,
             child: Material(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               shape: CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(

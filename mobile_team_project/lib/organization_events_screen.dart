@@ -39,7 +39,7 @@ class Event {
     try {
       return DateTime.parse(dateString);
     } catch (e) {
-      print("Error parsing date string '$dateString': $e");
+      debugPrint("Error parsing date string '$dateString': $e");
       return null;
     }
   }
@@ -101,7 +101,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
           _searchQuery = _searchController.text;
           // No need to call a separate filter method here,
           // the streams will re-evaluate with the new _searchQuery
-          print("Search query updated: $_searchQuery");
+          debugPrint("Search query updated: $_searchQuery");
         });
       }
     });
@@ -143,7 +143,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
           ),
         )
         .handleError((error) {
-          print("Error in upcoming events stream: $error");
+          debugPrint("Error in upcoming events stream: $error");
           return <Event>[];
         });
   }
@@ -162,7 +162,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
           ),
         )
         .handleError((error) {
-          print("Error in all events stream: $error");
+          debugPrint("Error in all events stream: $error");
           return <Event>[];
         });
   }
@@ -183,7 +183,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
           'h:mm a',
         ).format(event.startDateTime!); // e.g., 9:00 AM
       } catch (e) {
-        print("Error formatting upcoming date/time: $e");
+        debugPrint("Error formatting upcoming date/time: $e");
       }
     }
 
@@ -201,7 +201,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
         child: InkWell(
           // --- UPDATED onTap ---
           onTap: () {
-            print('Navigating to details for: ${event.title}');
+            debugPrint('Navigating to details for: ${event.title}');
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -292,7 +292,10 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
     if (event.startDateTime != null) {
       try {
         dateStr = DateFormat('MMM d, yyyy').format(event.startDateTime!);
-      } catch (e) {}
+      } catch (e) {
+        // Malformed date on the document - fall back to the 'Date N/A' default.
+        debugPrint("Error formatting grid card date: $e");
+      }
     }
     bool isPast = event.startDateTime?.isBefore(DateTime.now()) ?? false;
     return Card(
@@ -303,7 +306,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
       child: InkWell(
         // --- UPDATED onTap ---
         onTap: () {
-          print('Navigating to details for: ${event.title}');
+          debugPrint('Navigating to details for: ${event.title}');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -369,8 +372,8 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
                 ),
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.0),
-                    Colors.black.withOpacity(isPast ? 0.6 : 0.8),
+                    Colors.black.withValues(alpha: 0.0),
+                    Colors.black.withValues(alpha: isPast ? 0.6 : 0.8),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -403,7 +406,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
                     dateStr + (isPast ? " (Past)" : ""),
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontStyle: isPast ? FontStyle.italic : FontStyle.normal,
                     ),
                     textAlign: TextAlign.center,
@@ -452,7 +455,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
               'Events by ${widget.organization.name}',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -554,13 +557,14 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   );
                 }
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Text('Error: ${snapshot.error}'),
                     ),
                   );
+                }
 
                 // Use snapshot.data, which is the filtered list
                 final upcomingEvents = snapshot.data ?? [];
@@ -625,8 +629,9 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
                     ),
                   );
                 }
-                if (snapshot.hasError)
+                if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
                 // Use snapshot.data, which is the filtered list
                 final allEvents = snapshot.data ?? [];
