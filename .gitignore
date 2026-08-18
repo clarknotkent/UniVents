@@ -61,7 +61,7 @@
 .vscode/
 
 # Firebase related (IMPORTANT - Do not commit sensitive keys)
-# Paths are **/-prefixed because the Flutter app lives in mobile_team_project/,
+# Paths are **/-prefixed because the Flutter app lives in Univents_Mobile/,
 # not at the repo root. Root-anchored paths (/android/...) would never match.
 # These carry the release signing certificate SHA-1 and OAuth client config.
 **/android/app/google-services.json

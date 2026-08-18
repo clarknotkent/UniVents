@@ -6,20 +6,16 @@ browse student organizations, and register for events.
 
 Built with Flutter and Firebase (Authentication + Cloud Firestore).
 
-Developed as the final project for **IT Elective 5 — Multi-Platform
-Development** at Ateneo de Davao University.
+Developed as the final project for **IT Elective 5 (Multi-Platform App
+Development)**, 2nd Semester A.Y. 2024–2025, Ateneo de Davao University.
 
 ---
 
 ## Screenshots
 
-| Splash | Login | Organizations |
-|---|---|---|
-| ![Splash screen](docs/screenshots/01-splash.png) | ![Login screen](docs/screenshots/02-login.png) | ![Organization directory](docs/screenshots/03-organizations.png) |
-
-| Events | Event detail | Joined |
-|---|---|---|
-| ![Event listing](docs/screenshots/04-events.png) | ![Event detail](docs/screenshots/05-event-detail.png) | ![Joined state](docs/screenshots/06-joined.png) |
+| Splash | Organizations | Events | Event detail |
+|---|---|---|---|
+| ![Splash screen](docs/screenshots/01-splash.png) | ![Organization directory](docs/screenshots/02-organizations.png) | ![Events for an organization](docs/screenshots/03-events.png) | ![Event detail with join action](docs/screenshots/04-event-detail.png) |
 
 ## Features
 
@@ -49,7 +45,7 @@ Targets Android, iOS, macOS, and web from one codebase.
 ## Project structure
 
 ```
-mobile_team_project/
+Univents_Mobile/                        Flutter client (this app)
 ├── lib/
 │   ├── main.dart                       App entry, Firebase + Google Sign-In init
 │   ├── splash_screen.dart              Session restore and eligibility gate
@@ -63,7 +59,16 @@ mobile_team_project/
 ├── .env.example                        Configuration template (copy to .env)
 ├── firestore.rules                     Server-side access control
 └── firebase.json                       Firebase CLI configuration
+
+docs/
+├── SECURITY.md                         Access control model and rationale
+└── screenshots/                        Images used above
 ```
+
+The mobile client is one half of the system. Organizations and events are
+administered through a separate web application, which is why this app treats
+those collections as read-only and `firestore.rules` denies client writes to
+them.
 
 ## Data model
 
@@ -79,7 +84,7 @@ writes to those collections.
 
 ## Security
 
-Access control lives in [`firestore.rules`](mobile_team_project/firestore.rules)
+Access control lives in [`firestore.rules`](Univents_Mobile/firestore.rules)
 and is documented in [`docs/SECURITY.md`](docs/SECURITY.md). The short version:
 
 - Firebase API keys are public client identifiers, not secrets — they ship in
@@ -101,7 +106,7 @@ and is documented in [`docs/SECURITY.md`](docs/SECURITY.md). The short version:
 
 ```bash
 git clone <repository-url>
-cd flutterelectivefinal/mobile_team_project
+cd flutterelectivefinal/Univents_Mobile
 cp .env.example .env
 flutter pub get
 flutter run
@@ -176,8 +181,8 @@ application. Designed and implemented the app, modelled and populated the
 Firestore database, authored the security rules, and produced the organization
 and event content used throughout.
 
-Submitted for IT Elective 5 — Multi-Platform Development, Ateneo de Davao
-University.
+Submitted for IT Elective 5 (Multi-Platform App Development), 2nd Semester
+A.Y. 2024–2025, Ateneo de Davao University.
 
 ## License
 

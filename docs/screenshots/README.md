@@ -1,48 +1,57 @@
 # Screenshots
 
-Drop the captures referenced by the root README here, using these exact names:
+Captures referenced by the root README.
 
-| File | Screen | What to show |
+| File | Screen | What it shows |
 |---|---|---|
 | `01-splash.png` | Splash | Logo and title over the campus background |
-| `02-login.png` | Login | Both sign-in options visible; **do not type a real password** |
-| `03-organizations.png` | Home | Organization grid with logos loading correctly |
-| `04-events.png` | Organization events | An organization with several events listed |
-| `05-event-detail.png` | Event detail | Full event view before joining |
-| `06-joined.png` | Event detail | The same event after joining, showing the joined state |
+| `02-organizations.png` | Home | Organization grid with logos loaded |
+| `03-events.png` | Organization events | Upcoming and all events, with past events dimmed |
+| `04-event-detail.png` | Event detail | Full event view with the join action |
 
 ## Capturing on the iOS simulator
 
-Boot a device and take a shot straight to this folder:
+Boot a device, then capture whatever is on screen:
 
 ```bash
-xcrun simctl boot "iPhone 17 Pro"
+xcrun simctl boot "iPhone 17"
 ```
 
 ```bash
-xcrun simctl io booted screenshot docs/screenshots/03-organizations.png
+xcrun simctl io booted screenshot docs/screenshots/02-organizations.png
 ```
 
-This produces a clean device-resolution PNG with no window chrome, which is why
-it looks better in a README than a cropped desktop screenshot.
+This writes a clean device-resolution PNG with no window chrome, which reads far
+better in a README than a cropped desktop screenshot. ⌘S in the Simulator app
+works too, though it saves to the Desktop with a long timestamped filename.
+
+The splash screen navigates away after three seconds, so capture it immediately
+after launching:
+
+```bash
+xcrun simctl terminate booted com.clarknotkent.univents
+xcrun simctl launch booted com.clarknotkent.univents
+sleep 1
+xcrun simctl io booted screenshot docs/screenshots/01-splash.png
+```
 
 ## Before capturing
 
-- Sign in with a real account so the screens show actual organizations and
-  events. Empty states make the app look unfinished.
-- Check that organization logos load. A broken-image placeholder in the hero
+- Sign in first so the screens show real organizations and events. Empty states
+  make the app look unfinished.
+- Confirm organization logos load. A broken-image placeholder in the hero
   screenshot undercuts the whole README.
-- The header displays the signed-in user's name. Use an account whose displayed
-  name you are comfortable publishing, or crop it.
+- The home header shows the signed-in user's name.
 
-## Size
+## Resizing
 
-Full-resolution iPhone screenshots run 1–3 MB each, and six of them noticeably
-inflates a clone. Resizing to roughly 400px wide keeps them sharp in the README
-table while cutting each to tens of kilobytes:
+A full-resolution iPhone capture runs 0.5–4 MB, which bloats every clone. Scale
+them to 400px wide:
 
 ```bash
-sips -Z 400 docs/screenshots/*.png
+sips --resampleWidth 400 docs/screenshots/*.png
 ```
 
-`sips` ships with macOS, so no extra tooling is needed.
+Use `--resampleWidth`, **not** `-Z`. `-Z` constrains the longest side, so on a
+tall phone capture it would shrink the width to roughly 184px and leave the
+image unusably small.

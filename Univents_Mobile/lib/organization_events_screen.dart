@@ -432,8 +432,11 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
       0xFFF0F2F5,
     ); // Light greyish background
 
-    // Get the organization name or acronym for the hint text
-    final String orgHintName =
+    // Short label for the organization, used in the app bar and the search
+    // hint. Prefers the acronym because full organization names are long enough
+    // to be ellipsised in both places; falls back to the full name for any
+    // organization that has no acronym recorded.
+    final String orgShortName =
         widget.organization.acronym?.isNotEmpty ?? false
             ? widget.organization.acronym!
             : widget.organization.name;
@@ -452,7 +455,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
-              'Events by ${widget.organization.name}',
+              'Events by $orgShortName',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white.withValues(alpha: 0.9),
@@ -494,7 +497,7 @@ class _OrganizationEventsScreenState extends State<OrganizationEventsScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText:
-                    'Search $orgHintName Events...', // Use dynamic org name/acronym
+                    'Search $orgShortName Events...', // Use dynamic org name/acronym
                 prefixIcon: Icon(
                   Icons.search,
                   color: Colors.grey[600],
