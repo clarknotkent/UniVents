@@ -4,8 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Required for SystemUiOverlayStyle
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
+import 'google_sign_in_config.dart';
+
 // Note: We don't need to import LoginScreen directly anymore
 // as we are using named routes defined in main.dart
+
+/// Mirrors the two conditions enforced in firestore.rules: the address must be
+/// on the university domain, and it must be verified. Verification matters
+/// because Firebase's REST sign-up endpoint lets anyone create an account for
+/// an address they do not own; only a verified account proves ownership.
+bool _isEligible(User user) {
+  final String email = user.email?.toLowerCase() ?? '';
+  return user.emailVerified &&
+      email.endsWith('@${GoogleSignInConfig.expectedDomain}');
+}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -42,15 +54,31 @@ class _SplashScreenState extends State<SplashScreen> {
       // Get the current authentication state from Firebase
       User? user = FirebaseAuth.instance.currentUser;
 
+      // A restored session must clear the same bar as a fresh login. Checking
+      // only `user != null` would let any account that ever authenticated back
+      // in on every subsequent launch, since the @addu.edu.ph gate lives on the
+      // login screen and never runs on this path.
+      //
+      // This is defence in depth, not the enforcement point - firestore.rules
+      // is what actually denies such a session any data.
+      if (user != null && !_isEligible(user)) {
+        debugPrint("Splash: session failed the domain/verification check. Signing out.");
+        await FirebaseAuth.instance.signOut();
+        user = null;
+        // signOut() is an async gap, so the widget may have been disposed while
+        // it ran; re-check before touching context below.
+        if (!mounted) return;
+      }
+
       // Determine the target route based on whether a user is logged in
       if (user != null) {
         // User is signed in, navigate to the home screen
-        print("Splash: User logged in (${user.uid}). Navigating to /home.");
+        debugPrint("Splash: User logged in. Navigating to /home.");
         // Use pushReplacementNamed to replace the splash screen with the home screen
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         // User is not signed in, navigate to the login screen
-        print("Splash: No user logged in. Navigating to /login.");
+        debugPrint("Splash: No user logged in. Navigating to /login.");
         // Use pushReplacementNamed to replace the splash screen with the login screen
         Navigator.pushReplacementNamed(context, '/login');
       }
@@ -82,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen> {
             fit: BoxFit.cover, // Make the image cover the screen bounds
             // Provide a fallback widget in case the image fails to load
             errorBuilder: (context, error, stackTrace) {
-              print("Error loading splash background: $error");
+              debugPrint("Error loading splash background: $error");
               // Display a simple colored container as fallback
               return Container(color: Colors.grey[800]);
             },
@@ -91,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
           // Transparent Blue Filter Overlay
           // This adds a colored tint over the background image
           Container(
-            color: filterColor.withOpacity(filterOpacity),
+            color: filterColor.withValues(alpha: filterOpacity),
           ),
 
           // Centered Content (Logo and Text)
@@ -105,7 +133,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 130, // Specify logo width
                   // Provide a fallback icon if the logo image fails to load
                   errorBuilder: (context, error, stackTrace) {
-                     print("Error loading AdDU logo: $error");
+                     debugPrint("Error loading AdDU logo: $error");
                      // Display a generic school icon as fallback
                      return const Icon(Icons.school, color: Colors.white, size: 80);
                   }

@@ -1,0 +1,125 @@
+rules_version = '2';
+
+// Deploy with:  firebase deploy --only firestore:rules
+//
+// These rules are the ONLY thing standing between the database and the public.
+// The Firebase apiKey in lib/firebase_options.dart ships inside every app
+// binary, so anyone can reach this project from a script. Every check written
+// in Dart - the @addu.edu.ph test in login_screen.dart, the 'student' role
+// written at sign-up - is a UX convenience that is trivially bypassed, and is
+// therefore re-asserted here, server-side.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helpers -----------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Membership requires BOTH a university address AND a verified one.
+    //
+    // email_verified is the load-bearing half. This app has no sign-up screen,
+    // but Firebase Auth's REST signUp endpoint is reachable by anyone holding
+    // the (public) API key, and Firebase does not confirm ownership of an
+    // address at sign-up. Without this check, an outsider could self-register
+    // "anyone@addu.edu.ph" - an address they do not control - and satisfy the
+    // domain test. Google Sign-In sets email_verified = true because Google has
+    // already proven ownership; an unverified password account cannot pass.
+    //
+    // matches() is RE2 with full-string semantics, so the pattern must describe
+    // the WHOLE address. The local part is [^@]+ rather than .* on purpose: a
+    // trailing-only pattern like '.*@addu[.]edu[.]ph' would also accept
+    // "someone@evil.com@addu.edu.ph". Dots are [.] so they match literal dots.
+    function isUniversityMember() {
+      return isSignedIn()
+             && request.auth.token.email != null
+             && request.auth.token.email_verified == true
+             && request.auth.token.email.lower().matches('[^@]+@addu[.]edu[.]ph');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- users -------------------------------------------------------------
+    // A user owns their profile document but must NOT be able to grant
+    // themselves a role. The previous rule - `allow write: if request.auth.uid
+    // == userId` - let any signed-in student set role:'admin' on their own
+    // document, because it checked WHO was writing and never WHAT.
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      // Self-registration: the document must describe the caller, and the only
+      // role a client may ever assign itself is 'student'.
+      allow create: if isOwner(userId)
+                    && isUniversityMember()
+                    && request.resource.data.uid == userId
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.role == 'student';
+
+      // Profile updates may touch display fields only. role, uid, and email are
+      // frozen from the client's side - the new value must equal the old one.
+      // .get(field, default) is used rather than bare field access so that a
+      // legacy document missing one of these fields does not make the rule
+      // error out (a missing-field access denies the whole request).
+      allow update: if isOwner(userId)
+                    && isUniversityMember()
+                    && request.resource.data.get('role',  '') == resource.data.get('role',  '')
+                    && request.resource.data.get('uid',   '') == resource.data.get('uid',   '')
+                    && request.resource.data.get('email', '') == resource.data.get('email', '');
+
+      // Role changes belong in a Cloud Function using the Admin SDK (which
+      // bypasses rules) or in custom auth claims - never in the client.
+      allow delete: if false;
+    }
+
+    // --- organizations -----------------------------------------------------
+    // Read-only to clients. Content is curated from the Firebase console;
+    // nothing in the app writes here.
+
+    match /organizations/{orgId} {
+      allow read: if isUniversityMember();
+      allow write: if false;
+    }
+
+    // --- events ------------------------------------------------------------
+
+    match /events/{eventId} {
+      allow read: if isUniversityMember();
+      allow write: if false;
+
+      // A user may join or leave an event, and nothing else. The document ID is
+      // pinned to their own UID, so nobody can register - or un-register -
+      // somebody else.
+      //
+      // read is owner-only, NOT member-wide: each attendee document stores
+      // userEmail and userName, so a member-wide read would let any student
+      // enumerate the email address of everyone attending. The app only ever
+      // reads its own document (.doc(currentUser.uid)), so nothing is lost.
+      // Showing a public attendee list or count later needs either a relaxed
+      // rule here or, better, a counter field maintained by a Cloud Function.
+      match /attendees/{attendeeId} {
+        allow read: if isOwner(attendeeId);
+
+        allow create: if isOwner(attendeeId)
+                      && isUniversityMember()
+                      && request.resource.data.userId == request.auth.uid;
+
+        // Joining is create-then-delete in the app; there is no edit path.
+        allow update: if false;
+        allow delete: if isOwner(attendeeId);
+      }
+    }
+
+    // --- default deny ------------------------------------------------------
+    // Any collection not named above is unreachable. New collections fail
+    // closed until a rule is added deliberately.
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
