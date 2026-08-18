@@ -51,32 +51,31 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyChdNiHaCjluqxEzMXkhmZs44vXTDUfdmI',
-    appId: '1:1097036028807:android:f1dffcaf3769f2edd11122',
+    appId: '1:1097036028807:android:fcf925bf90f949c5d11122',
     messagingSenderId: '1097036028807',
     projectId: 'it5-teamj1',
     storageBucket: 'it5-teamj1.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAquG7cTKu9OXLfMLLjyT1Pzu4z5gbh1_I',
-    appId: '1:1097036028807:ios:e258ddcebdcd8f9ad11122',
+    appId: '1:1097036028807:ios:8fd3de8f010e565dd11122',
     messagingSenderId: '1097036028807',
     projectId: 'it5-teamj1',
     storageBucket: 'it5-teamj1.firebasestorage.app',
-    iosClientId: '1097036028807-i8l7gqt9gft9t53k164r23glk35qfkth.apps.googleusercontent.com',
-    iosBundleId: 'com.example.univentsApp',
+    androidClientId: '1097036028807-bnfbphpalhv27va7t1iq93sqhih0fe6a.apps.googleusercontent.com',
+    iosClientId: '1097036028807-89gjlunbds32he7kl7re2m42h8revemo.apps.googleusercontent.com',
+    iosBundleId: 'com.clarknotkent.univents',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAquG7cTKu9OXLfMLLjyT1Pzu4z5gbh1_I',
-    appId: '1:1097036028807:ios:e258ddcebdcd8f9ad11122',
+    appId: '1:1097036028807:ios:8fd3de8f010e565dd11122',
     messagingSenderId: '1097036028807',
     projectId: 'it5-teamj1',
     storageBucket: 'it5-teamj1.firebasestorage.app',
-    iosClientId: '1097036028807-i8l7gqt9gft9t53k164r23glk35qfkth.apps.googleusercontent.com',
-    iosBundleId: 'com.example.univentsApp',
+    androidClientId: '1097036028807-bnfbphpalhv27va7t1iq93sqhih0fe6a.apps.googleusercontent.com',
+    iosClientId: '1097036028807-89gjlunbds32he7kl7re2m42h8revemo.apps.googleusercontent.com',
+    iosBundleId: 'com.clarknotkent.univents',
   );
-
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyBgIIrId2x72DZ2dtJ1RrVtirabhx2SaJ8',
     appId: '1:1097036028807:web:14ffbc62c48f6a72d11122',
