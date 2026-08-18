@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _filterOrganizations();
           },
           onError: (error) {
-            print("Error in organizations stream: $error");
+            debugPrint("Error in organizations stream: $error");
             if (mounted) {
               _allOrganizations = [];
               _filteredOrganizations = [];
@@ -199,9 +199,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (confirmLogout == true) {
       try {
-        print("Logging out...");
+        debugPrint("Logging out...");
         // Sign out from Google and Firebase
-        await GoogleSignIn().signOut();
+        await GoogleSignIn.instance.signOut();
         await FirebaseAuth.instance.signOut();
         // Navigate back to login screen, removing all previous routes
         if (mounted) {
@@ -212,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
       } catch (e) {
-        print("Error during logout: $e");
+        debugPrint("Error during logout: $e");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } else {
-      print("Logout cancelled by user.");
+      debugPrint("Logout cancelled by user.");
     }
   }
 
@@ -245,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         onTap: () {
           // Navigate to the specific organization's events screen
-          print('Navigating to events for ${org.name}');
+          debugPrint('Navigating to events for ${org.name}');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           errorBuilder: (context, error, stackTrace) {
                             // Show fallback icon if image fails to load
-                            print("Error loading image ${org.logoUrl}: $error");
+                            debugPrint("Error loading image ${org.logoUrl}: $error");
                             return Center(
                               child: Icon(
                                 Icons.broken_image,
@@ -347,15 +347,15 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundImagePath,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              print("Error loading background image: $error");
+              debugPrint("Error loading background image: $error");
               return Container(
-                color: primaryColor.withOpacity(0.8),
+                color: primaryColor.withValues(alpha: 0.8),
               ); // Fallback color
             },
           ),
 
           // Layer 2: Translucent Blue Filter
-          Container(color: filterColor.withOpacity(filterOpacity)),
+          Container(color: filterColor.withValues(alpha: filterOpacity)),
 
           // Layer 3: Content (wrapped in SafeArea)
           SafeArea(
@@ -404,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               userDisplayName,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 shadows: [
                                   Shadow(blurRadius: 1, color: Colors.black54),
                                 ],

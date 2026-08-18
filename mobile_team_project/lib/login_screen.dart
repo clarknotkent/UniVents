@@ -7,6 +7,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // --- End Firebase Imports ---
 
+import 'google_sign_in_config.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,15 +26,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // --- Firebase Instance Variables ---
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // google_sign_in 7.x exposes a single instance; it is configured once in
+  // main.dart via GoogleSignInConfig.initialize().
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // --- State Variable for Loading Indicator ---
   bool _isLoading = false;
 
   // --- Constant for ADDU Domain ---
-  // Make sure this domain is exactly correct
-  final String _expectedDomain = "addu.edu.ph";
+  // Single source of truth, shared with the GoogleSignIn hostedDomain setting.
+  // NOTE: this check is a convenience only. It runs after Firebase has already
+  // authenticated the user and is trivially bypassed by calling the Firebase
+  // REST API directly, so the real restriction lives in firestore.rules.
+  final String _expectedDomain = GoogleSignInConfig.expectedDomain;
 
   // --- Lifecycle Methods ---
   @override
@@ -93,7 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // 5. If sign-in successful, check/update Firestore
       if (firebaseUser != null) {
-        print("[Email/Pass] Signed in UID: ${firebaseUser.uid}, Email: ${firebaseUser.email}");
+        // Deliberately does not log the UID or email - device logs are readable
+        // by other tooling on the device and end up in bug reports.
+        debugPrint("[Email/Pass] Sign-in succeeded.");
         // Get reference to the user's document in Firestore
         final DocumentReference userDocRef = _firestore.collection('users').doc(firebaseUser.uid);
         final DocumentSnapshot userDoc = await userDocRef.get(); // Read the document
@@ -108,11 +117,11 @@ class _LoginScreenState extends State<LoginScreen> {
             'createdAt': FieldValue.serverTimestamp(), // Record creation time
             'role': 'student',                       // Assign default role
           });
-          print("[Email/Pass] New user document created with student role.");
+          debugPrint("[Email/Pass] New user document created with student role.");
         } else {
           // User document already exists, safely get the role
            final role = (userDoc.data() as Map<String, dynamic>?)?['role'] ?? 'N/A';
-           print("[Email/Pass] Existing user signed in. Role: $role");
+           debugPrint("[Email/Pass] Existing user signed in. Role: $role");
            // Optionally update last login time or other fields
            // await userDocRef.update({'lastLogin': FieldValue.serverTimestamp()});
         }
@@ -127,17 +136,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Handle specific Firebase Authentication errors
     } on FirebaseAuthException catch (e) {
-      print("[Email/Pass] Firebase Auth Error: ${e.code} - ${e.message}");
+      debugPrint("[Email/Pass] Firebase Auth Error: ${e.code} - ${e.message}");
       String errorMessage = 'Login failed. Please check your credentials.';
-      if (e.code == 'user-not-found' || e.code == 'invalid-email') errorMessage = 'No user found with that email address.';
-      else if (e.code == 'wrong-password' || e.code == 'invalid-credential') errorMessage = 'Incorrect password. Please try again.';
-      else if (e.code == 'user-disabled') errorMessage = 'This user account has been disabled.';
-      else errorMessage = 'An authentication error occurred (${e.code}). Please try again later.';
+      if (e.code == 'user-not-found' || e.code == 'invalid-email') {
+        errorMessage = 'No user found with that email address.';
+      } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (e.code == 'user-disabled') {
+        errorMessage = 'This user account has been disabled.';
+      } else {
+        errorMessage = 'An authentication error occurred (${e.code}). Please try again later.';
+      }
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage), backgroundColor: Colors.redAccent));
 
     // Handle other potential errors
     } catch (e) {
-      print("[Email/Pass] Error during Sign-In: $e");
+      debugPrint("[Email/Pass] Error during Sign-In: $e");
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An unexpected error occurred: ${e.toString()}'), backgroundColor: Colors.redAccent));
 
     // Ensure loading indicator is turned off regardless of success or failure
@@ -154,19 +168,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { _isLoading = true; });
 
     try {
-      // 1. Trigger Google Sign-In prompt
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      // Handle if user cancelled the Google Sign-In prompt
-      if (googleUser == null) {
-        if (mounted) setState(() { _isLoading = false; });
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google Sign-In cancelled.'), duration: Duration(seconds: 2)));
-        return;
+      // 1. Trigger Google Sign-In prompt.
+      //    In google_sign_in 7.x authenticate() replaces signIn(): it returns a
+      //    non-nullable account and signals cancellation by throwing a
+      //    GoogleSignInException, which is handled below.
+      if (!_googleSignIn.supportsAuthenticate()) {
+        throw UnsupportedError(
+          'Google Sign-In is not available on this platform.',
+        );
       }
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       // --- ADDU Email Check ---
-      final String userEmail = googleUser.email; // googleUser is guaranteed non-null here
-      // Check if email is null OR doesn't end with the expected domain (case-insensitive)
+      final String userEmail = googleUser.email;
+      // Check the address ends with the expected domain (case-insensitive)
       if (!userEmail.toLowerCase().endsWith('@$_expectedDomain')) {
         await _googleSignIn.signOut(); // Sign out from Google side to allow re-selection
         if (mounted) setState(() { _isLoading = false; });
@@ -175,12 +190,14 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       // --- End Check ---
 
-      // 2. Get Google authentication tokens
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // 2. Get Google authentication tokens.
+      //    v7 no longer returns an accessToken here - authentication and
+      //    authorization are separate flows now. Firebase only needs the
+      //    idToken to establish the credential.
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
-      // 3. Create a Firebase credential using Google tokens
+      // 3. Create a Firebase credential using the Google ID token
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -190,7 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // 5. If Firebase sign-in successful, check/update Firestore
       if (firebaseUser != null) {
-        print("[Google] Signed in UID: ${firebaseUser.uid}, Email: ${firebaseUser.email}");
+        // See note above: no UID or email in logs.
+        debugPrint("[Google] Sign-in succeeded.");
         // Get reference to the user's document in Firestore
         final DocumentReference userDocRef = _firestore.collection('users').doc(firebaseUser.uid);
         final DocumentSnapshot userDoc = await userDocRef.get(); // Read the document
@@ -205,13 +223,13 @@ class _LoginScreenState extends State<LoginScreen> {
             'createdAt': FieldValue.serverTimestamp(),
             'role': 'student', // Assign default student role
           });
-          print("[Google] New user document created with student role.");
+          debugPrint("[Google] New user document created with student role.");
         } else {
            // User document exists, update display name and photo URL in case they changed
            await userDocRef.update({'displayName': firebaseUser.displayName,'photoURL': firebaseUser.photoURL});
            // Safely get the existing role
            final role = (userDoc.data() as Map<String, dynamic>?)?['role'] ?? 'N/A';
-           print("[Google] Existing user signed in. Role: $role");
+           debugPrint("[Google] Existing user signed in. Role: $role");
         }
 
         // 6. Navigate to Home Screen
@@ -222,9 +240,29 @@ class _LoginScreenState extends State<LoginScreen> {
          throw Exception("Failed to get Firebase user details after Google sign in.");
       }
 
+    // Handle user cancellation, which v7 reports as an exception rather than a
+    // null account. This is a normal outcome, not an error worth alarming about.
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Google Sign-In cancelled.'),
+            duration: Duration(seconds: 2),
+          ));
+        }
+        return;
+      }
+      debugPrint('[Google] Sign-In error: ${e.code}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Could not sign in with Google. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
+
     // Handle specific Firebase errors that might occur during credential linking
     } on FirebaseAuthException catch(e) {
-       print("[Google] Firebase Auth Error: ${e.code} - ${e.message}");
+       debugPrint("[Google] Firebase Auth Error: ${e.code} - ${e.message}");
         if (mounted) setState(() { _isLoading = false; });
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Firebase error during Google sign-in: ${e.message ?? e.code}'), backgroundColor: Colors.redAccent));
         // Attempt to sign out from Google as well, as Firebase linking failed
@@ -232,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Handle other potential errors (network issues, etc.)
     } catch (e) {
-      print("[Google] Error during Sign-In: $e");
+      debugPrint("[Google] Error during Sign-In: $e");
       if (mounted) setState(() { _isLoading = false; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An unexpected error occurred during Google Sign-In: ${e.toString()}'), backgroundColor: Colors.redAccent));
       // Attempt to sign out from Google as well
@@ -268,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
              fit: BoxFit.cover // Cover the entire screen area
           ),
           // Semi-transparent color overlay
-          Container(color: primaryColor.withOpacity(filterOpacity)),
+          Container(color: primaryColor.withValues(alpha: filterOpacity)),
           // SafeArea ensures content isn't obscured by notches or system bars
           SafeArea(
             child: Center( // Center the main content vertically and horizontally
@@ -284,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.white, // White background for the card
                         borderRadius: BorderRadius.circular(16.0), // Rounded corners
                         // Subtle shadow for depth
-                        boxShadow: [ BoxShadow( color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2)) ],
+                        boxShadow: [ BoxShadow( color: Colors.grey.withValues(alpha: 0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2)) ],
                       ),
                       // Form widget enables validation of TextFormFields
                       child: Form(
@@ -361,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                child: TextButton(
                                  onPressed: () {
                                      // Placeholder for forgot password functionality
-                                     print('Forgot Password tapped - TODO');
+                                     debugPrint('Forgot Password tapped - TODO');
                                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Forgot password not implemented yet.')));
                                   },
                                  child: Text('Forgot Password?', style: TextStyle(color: Colors.grey[600]))
