@@ -1,16 +1,29 @@
 # univents_app
 
-A new Flutter project.
+Flutter application source for UNIVENTS.
 
-## Getting Started
+See the [repository README](../README.md) for an overview, setup instructions,
+and known limitations, and [docs/SECURITY.md](../docs/SECURITY.md) for the access
+control model.
 
-This project is a starting point for a Flutter application.
+## Quick reference
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter pub get                  # install dependencies
+flutter run                      # run on the selected device
+flutter devices                  # list targets (use the device id with -d)
+flutter analyze                  # static analysis
+flutter build apk --debug        # Android
+flutter build ios --simulator    # iOS simulator
+flutter build web                # web
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Firebase configuration is generated — regenerate it with `flutterfire configure`
+rather than editing `lib/firebase_options.dart` by hand.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Security rules live in [`firestore.rules`](firestore.rules) and take effect only
+once deployed:
+
+```bash
+firebase deploy --only firestore:rules --project <your-project-id>
+```
