@@ -6,7 +6,20 @@ browse student organizations, and register for events.
 
 Built with Flutter and Firebase (Authentication + Cloud Firestore).
 
+Developed as the final project for **IT Elective 5 — Multi-Platform
+Development** at Ateneo de Davao University.
+
 ---
+
+## Screenshots
+
+| Splash | Login | Organizations |
+|---|---|---|
+| ![Splash screen](docs/screenshots/01-splash.png) | ![Login screen](docs/screenshots/02-login.png) | ![Organization directory](docs/screenshots/03-organizations.png) |
+
+| Events | Event detail | Joined |
+|---|---|---|
+| ![Event listing](docs/screenshots/04-events.png) | ![Event detail](docs/screenshots/05-event-detail.png) | ![Joined state](docs/screenshots/06-joined.png) |
 
 ## Features
 
@@ -28,6 +41,7 @@ Built with Flutter and Firebase (Authentication + Cloud Firestore).
 | Auth | `firebase_auth` 6.5.7, `google_sign_in` 7.2.0 |
 | Database | `cloud_firestore` 6.8.0 |
 | Core | `firebase_core` 4.13.0 |
+| Configuration | `flutter_dotenv` |
 | Utilities | `intl`, `smooth_page_indicator` |
 
 Targets Android, iOS, macOS, and web from one codebase.
@@ -60,8 +74,8 @@ mobile_team_project/
 | `events/{id}` | Events, linked to an organization | Read-only |
 | `events/{id}/attendees/{uid}` | Event registrations | Owner only |
 
-Organizations and events are curated from the Firebase console; the app never
-writes to them.
+Organization and event records are curated outside the mobile app; it never
+writes to those collections.
 
 ## Security
 
@@ -152,9 +166,19 @@ regardless of what this repository contains.
 - Attendee documents are readable only by their owner, so attendee lists and
   counts are not available to the UI. Adding them needs a counter maintained by
   a Cloud Function.
-- Organizations and events have no in-app management UI.
+- Organization logos are hotlinked from external hosts, so a dead link renders a
+  placeholder rather than an image.
 
-## Status
+## Author
 
-Academic project, maintained as a portfolio piece. Not published to any app
-store.
+**Kent Elrond Andionne Aspa** — sole developer of the Flutter mobile
+application. Designed and implemented the app, modelled and populated the
+Firestore database, authored the security rules, and produced the organization
+and event content used throughout.
+
+Submitted for IT Elective 5 — Multi-Platform Development, Ateneo de Davao
+University.
+
+## License
+
+Released under the [MIT License](LICENSE).
