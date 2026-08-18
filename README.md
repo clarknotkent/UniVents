@@ -13,9 +13,16 @@ Development)**, 2nd Semester A.Y. 2024–2025, Ateneo de Davao University.
 
 ## Screenshots
 
-| Splash | Organizations | Events | Event detail |
-|---|---|---|---|
-| ![Splash screen](docs/screenshots/01-splash.png) | ![Organization directory](docs/screenshots/02-organizations.png) | ![Events for an organization](docs/screenshots/03-events.png) | ![Event detail with join action](docs/screenshots/04-event-detail.png) |
+<p align="center">
+  <img src="docs/screenshots/01-splash.png" width="200" alt="Splash screen" />
+  <img src="docs/screenshots/02-organizations.png" width="200" alt="Organization directory" />
+  <img src="docs/screenshots/03-events.png" width="200" alt="Events for an organization" />
+  <img src="docs/screenshots/04-event-detail.png" width="200" alt="Event detail with join action" />
+</p>
+
+<p align="center">
+  <em>Splash &nbsp;·&nbsp; Organization directory &nbsp;·&nbsp; Events by organization &nbsp;·&nbsp; Event detail</em>
+</p>
 
 ## Features
 
